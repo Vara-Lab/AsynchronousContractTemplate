@@ -1,6 +1,6 @@
 
 #![no_std]
-use gstd::{msg, collections::HashMap , prelude::*,ActorId};
+use gstd::{msg,async_main, collections::HashMap , prelude::*,ActorId};
 use io::*;
 
 #[cfg(feature = "binary-vendor")]
