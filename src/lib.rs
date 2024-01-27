@@ -1,6 +1,6 @@
 
 #![no_std]
-use gstd::{async_main, msg , prelude::*,ActorId};
+use gstd::{msg, collections::HashMap , prelude::*,ActorId};
 use io::*;
 
 #[cfg(feature = "binary-vendor")]
@@ -24,6 +24,7 @@ fn state_mut() -> &'static mut CustomStruct {
 
 }
 
+#[warn(dead_code)]
 fn init_state_mut() -> &'static mut InitStruct {
 
     let initstruct = unsafe { INIT.as_mut()};
@@ -33,11 +34,11 @@ fn init_state_mut() -> &'static mut InitStruct {
 }
 
 // Create a public State
-#[derive(Default, Encode, Decode, TypeInfo)]
+#[derive(Clone, Default)]
 pub struct CustomStruct {
     pub firstfield: String,
     pub secondfield: u128,
-    pub thirdfield: ActorId,
+    pub thirdfield: HashMap<ActorId, u128>,
 }
 
 // Create a implementation on State
@@ -91,39 +92,60 @@ async fn main(){
         let action: Action = msg::load().expect("Could not load Action");
 
         // We receive an action from the user and update the state. Example:
-        match &action {
+        match action {
             Action::FirstAction => {
 
                 // Create a variable with mutable state.
                 let currentstate = state_mut();
 
                 // Update your state.
-                currentstate.firstfield = "Update".to_string();
+                currentstate.thirdfield
+                .entry(msg::source())
+                .and_modify(|number| *number = number.saturating_add(1))
+                .or_insert(1);
 
 
                  // Generate your event.
-                let _ = msg::reply(Event::FirstEvent,0);
+                 let _ =msg::reply(Event::FirstEvent,0);
 
 
             }
-            Action::SecondAction => {
+            Action::SecondAction(input) => {
 
+
+                 // Create a variable with mutable state.
                 let currentstate = state_mut();
 
-                currentstate.firstfield = "Update".to_string();
+                // Update your state with a String input
+                currentstate.firstfield = input.to_string();
 
-                let _ = msg::reply(Event::SecondEvent,0);
+                 // Generate your event.
+                let _ =  msg::reply(Event::SecondEvent,0);
                
 
             }
-            Action::ThirdAction => {
+            Action::ThirdAction(input) => {
                
+                // Create a variable with mutable state.
                 let currentstate = state_mut();
 
-                currentstate.firstfield = "Update".to_string();
+                // Update your state with a String input
+                currentstate.secondfield = input;
+
+                // Generate your event.
+                let _ = msg::reply(Event::ThirdEvent,0);
+            }
+
+            // 
+            Action::Fourthaction(_input) => {
+               
+                let _currentstate = state_mut();
+
 
                 let _ =  msg::reply(Event::ThirdEvent,0);
             }
+
+           
         };
     }
 
@@ -133,8 +155,35 @@ async fn main(){
 // 5. Create the state() function of your contract.
 #[no_mangle]
 extern "C" fn state() {
-    let state = unsafe {
-        STATE.get_or_insert(Default::default())
-    };
-    msg::reply(state, 0).expect("Failed to share state");
+   
+    let state = unsafe { STATE.take().expect("Unexpected error in taking state") };
+
+    msg::reply::<IoCustomStruct>(state.into(), 0)
+    .expect("Failed to encode or reply with `<ContractMetadata as Metadata>::State` from `state()`");
+    
+}
+
+
+// Implementation of the From trait for converting CustomStruct to IoCustomStruct
+impl From<CustomStruct> for IoCustomStruct {
+
+    // Conversion method
+    fn from(value: CustomStruct) -> Self {
+        // Destructure the CustomStruct object into its individual fields
+        let CustomStruct {
+            firstfield,
+            secondfield,
+            thirdfield,
+        } = value;
+
+        // Perform some transformation on thirdfield, cloning its elements
+        let thirdfield = thirdfield.iter().map(|(k, v)| (*k, v.clone())).collect();
+   
+        // Create a new IoCustomStruct object using the destructured fields
+        Self {
+            firstfield,
+            secondfield,
+            thirdfield,
+        }
+    }
 }
