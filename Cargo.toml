@@ -32,11 +32,11 @@ tokio.workspace = true
 members = ["state"]
 
 [workspace.dependencies]
-gstd = { git = "https://github.com/gear-tech/gear", tag = "v1.0.2" }
-gmeta = { git = "https://github.com/gear-tech/gear", tag = "v1.0.2" }
-gear-wasm-builder = { git = "https://github.com/gear-tech/gear", tag = "v1.0.2" }
-gtest = { git = "https://github.com/gear-tech/gear", rev = "946ac47"  }
-gclient = { git = "https://github.com/gear-tech/gear", rev = "946ac47" }
+gstd = { git = "https://github.com/gear-tech/gear", tag = "v1.1.0" }
+gmeta = { git = "https://github.com/gear-tech/gear", tag = "v1.1.0" }
+gear-wasm-builder = { git = "https://github.com/gear-tech/gear", tag = "v1.1.0" }
+gtest = { git = "https://github.com/gear-tech/gear", tag = "v1.1.0"   }
+gclient = { git = "https://github.com/gear-tech/gear",tag = "v1.1.0"  }
 parity-scale-codec = { version = "3", default-features = false }
 scale-info = { version = "2", default-features = false }
 io.path = "io"
